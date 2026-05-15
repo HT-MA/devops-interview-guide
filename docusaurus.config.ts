@@ -2,6 +2,8 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import { themes as prismThemes } from "prism-react-renderer";
 
+const customWebpackPlugin = require("./webpack-custom-plugin.js");
+
 const config: Config = {
   title: "DevOps Interview Handbook",
   tagline: "云原生 / SRE / Kubernetes / CI-CD 面试知识库",
@@ -17,6 +19,8 @@ const config: Config = {
     defaultLocale: "zh-Hans",
     locales: ["zh-Hans"],
   },
+
+  plugins: [customWebpackPlugin],
 
   presets: [
     [

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ComponentProps } from '@docusaurus/types';
 
-type Props = ComponentProps<'DocPaginator'];
+type Props = ComponentProps<'DocPaginator'>;
 
 export default function DocPaginator(props: Props): JSX.Element {
   return (

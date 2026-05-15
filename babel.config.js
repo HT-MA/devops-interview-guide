@@ -1,9 +1,3 @@
-{
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "@site/*": ["./*"]
-    }
-  }
-}
+module.exports = {
+  presets: [require.resolve("@docusaurus/core/lib/babel/preset")],
+};
