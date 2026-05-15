@@ -3,8 +3,6 @@ import type * as Preset from "@docusaurus/preset-classic";
 import { themes as prismThemes } from "prism-react-renderer";
 
 const config: Config = {
-  // 不使用自定义插件，换另一种方法
-  // 添加未来可以添加插件的配置预留位置
   title: "DevOps Interview Handbook",
   tagline: "云原生 / SRE / Kubernetes / CI-CD 面试知识库",
   favicon: "img/logo.svg",
@@ -26,7 +24,8 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
-          editUrl: "https://github.com/HT-MA/devops-interview-guide/edit/main/",
+          editUrl:
+            "https://github.com/HT-MA/devops-interview-guide/edit/main/",
         },
         blog: {
           showReadingTime: true,
@@ -34,7 +33,8 @@ const config: Config = {
             type: ["rss", "atom"],
             xslt: true,
           },
-          editUrl: "https://github.com/HT-MA/devops-interview-guide/edit/main/",
+          editUrl:
+            "https://github.com/HT-MA/devops-interview-guide/edit/main/",
           onInlineTags: "warn",
           onInlineAuthors: "warn",
           onUntruncatedBlogPosts: "warn",
@@ -62,10 +62,6 @@ const config: Config = {
           label: "面试题库",
         },
         {
-          type: "docsVersionDropdown",
-          position: "right",
-        },
-        {
           href: "https://github.com/HT-MA/devops-interview-guide",
           position: "right",
           className: "header-github-link",
@@ -79,39 +75,18 @@ const config: Config = {
         {
           title: "核心模块",
           items: [
-            {
-              label: "Linux",
-              to: "/docs/linux/",
-            },
-            {
-              label: "Kubernetes",
-              to: "/docs/kubernetes/",
-            },
-            {
-              label: "Docker",
-              to: "/docs/docker/",
-            },
-            {
-              label: "CI/CD",
-              to: "/docs/cicd/",
-            },
+            { label: "Linux", to: "/docs/linux/" },
+            { label: "Kubernetes", to: "/docs/kubernetes/" },
+            { label: "Docker", to: "/docs/docker/" },
+            { label: "CI/CD", to: "/docs/cicd/" },
           ],
         },
         {
           title: "进阶内容",
           items: [
-            {
-              label: "监控告警",
-              to: "/docs/monitoring/",
-            },
-            {
-              label: "SRE",
-              to: "/docs/sre/",
-            },
-            {
-              label: "场景题",
-              to: "/docs/scenarios/",
-            },
+            { label: "监控告警", to: "/docs/monitoring/" },
+            { label: "SRE", to: "/docs/sre/" },
+            { label: "场景题", to: "/docs/scenarios/" },
           ],
         },
         {
