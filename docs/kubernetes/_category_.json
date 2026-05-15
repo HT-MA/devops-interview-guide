@@ -1,0 +1,8 @@
+{
+  "label": "Kubernetes",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "K8s 核心概念、运维实践、故障排查等高频面试题"
+  }
+}

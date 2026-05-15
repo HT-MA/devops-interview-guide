@@ -1,0 +1,8 @@
+{
+  "label": "监控告警",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Prometheus、Grafana、日志收集等高频面试题"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "label": "Linux",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Linux 系统管理、进程管理、网络配置等高频面试题"
+  }
+}

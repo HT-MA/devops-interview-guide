@@ -1,0 +1,8 @@
+{
+  "label": "Terraform",
+  "position": 8,
+  "link": {
+    "type": "generated-index",
+    "description": "基础设施即代码、状态管理、模块化等高频面试题"
+  }
+}

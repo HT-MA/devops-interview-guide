@@ -1,0 +1,8 @@
+{
+  "label": "Ansible",
+  "position": 9,
+  "link": {
+    "type": "generated-index",
+    "description": "自动化运维、playbook 编写、角色管理等高频面试题"
+  }
+}

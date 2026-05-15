@@ -1,0 +1,31 @@
+{
+  "title": {
+    "message": "DevOps Interview Handbook",
+    "description": "The title for the site"
+  },
+  "tagline": {
+    "message": "云原生 / SRE / Kubernetes / CI-CD 面试知识库",
+    "description": "The tagline for the site"
+  },
+  "announcements": {
+    "announcement": null
+  },
+  "sidebar": {
+    "title": {
+      "message": "面试题库",
+      "description": "The label for the docs sidebar"
+    }
+  },
+  "learnMore": {
+    "message": "了解更多",
+    "description": "The label used for links to the docs"
+  },
+  "versionBadge.label": {
+    "message": "版本：$version",
+    "description": "The label for the version badge"
+  },
+  "copyright": {
+    "message": "Copyright © $currentYear DevOps Interview Handbook",
+    "description": "The footer copyright"
+  }
+}
