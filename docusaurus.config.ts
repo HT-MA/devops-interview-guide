@@ -3,6 +3,21 @@ import type * as Preset from "@docusaurus/preset-classic";
 import { themes as prismThemes } from "prism-react-renderer";
 
 const config: Config = {
+  plugins: [
+    // 自定义插件修复 webpack ProgressPlugin 问题
+    function (context, options) {
+      return {
+        name: 'custom-webpack-config',
+        configureWebpack(config, isServer, utils) {
+          // 移除有问题的 ProgressPlugin
+          config.plugins = config.plugins.filter(
+            plugin => plugin.constructor.name !== 'ProgressPlugin'
+          );
+          return config;
+        },
+      };
+    },
+  ],
   title: "DevOps Interview Handbook",
   tagline: "云原生 / SRE / Kubernetes / CI-CD 面试知识库",
   favicon: "img/logo.svg",
