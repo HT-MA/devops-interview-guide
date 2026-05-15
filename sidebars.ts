@@ -12,7 +12,6 @@ const sidebars: SidebarsConfig = {
         slug: "/linux",
       },
       items: [
-        "linux/_category_",
         "linux/process-management",
         "linux/memory-management",
         "linux/cpu-analysis",
@@ -33,7 +32,6 @@ const sidebars: SidebarsConfig = {
         slug: "/docker",
       },
       items: [
-        "docker/_category_",
         "docker/container-basics",
         "docker/dockerfile-optimization",
         "docker/docker-network",
@@ -51,7 +49,6 @@ const sidebars: SidebarsConfig = {
         slug: "/kubernetes",
       },
       items: [
-        "kubernetes/_category_",
         "kubernetes/pod-lifecycle",
         "kubernetes/deployment",
         "kubernetes/service",
@@ -73,7 +70,6 @@ const sidebars: SidebarsConfig = {
         slug: "/cicd",
       },
       items: [
-        "cicd/_category_",
         "cicd/pipeline-design",
         "cicd/jenkins",
         "cicd/github-actions",
@@ -91,7 +87,6 @@ const sidebars: SidebarsConfig = {
         slug: "/monitoring",
       },
       items: [
-        "monitoring/_category_",
         "monitoring/prometheus",
         "monitoring/grafana",
         "monitoring/alerting",
@@ -108,7 +103,6 @@ const sidebars: SidebarsConfig = {
         slug: "/sre",
       },
       items: [
-        "sre/_category_",
         "sre/slo-sli-sla",
         "sre/incident-management",
         "sre/observability",
@@ -124,7 +118,6 @@ const sidebars: SidebarsConfig = {
         slug: "/scenarios",
       },
       items: [
-        "scenarios/_category_",
         "scenarios/cpu-high",
         "scenarios/memory-leak",
         "scenarios/network-issue",
@@ -141,7 +134,7 @@ const sidebars: SidebarsConfig = {
         description: "基础设施即代码、状态管理、模块化等高频面试题",
         slug: "/terraform",
       },
-      items: ["terraform/_category_", "terraform/basics", "terraform/state-management"],
+      items: ["terraform/basics", "terraform/state-management"],
     },
     {
       type: "category",
@@ -152,7 +145,7 @@ const sidebars: SidebarsConfig = {
         description: "自动化运维、 playbook 编写、角色管理等高频面试题",
         slug: "/ansible",
       },
-      items: ["ansible/_category_", "ansible/basics", "ansible/playbooks"],
+      items: ["ansible/basics", "ansible/playbooks"],
     },
     {
       type: "category",
@@ -163,7 +156,7 @@ const sidebars: SidebarsConfig = {
         description: "各大厂高频面试题汇总",
         slug: "/hr",
       },
-      items: ["hr/_category_", "hr/behavioral", "hr/technical"],
+      items: ["hr/behavioral", "hr/technical"],
     },
   ],
 };
