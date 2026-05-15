@@ -1,13 +1,14 @@
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
+import { themes as prismThemes } from "prism-react-renderer";
 
 const config: Config = {
   title: "DevOps Interview Handbook",
   tagline: "云原生 / SRE / Kubernetes / CI-CD 面试知识库",
-  favicon: "img/favicon.ico",
-  url: "https://your-github-username.github.io",
+  favicon: "img/logo.svg",
+  url: "https://HT-MA.github.io",
   baseUrl: "/devops-interview-guide/",
-  organizationName: "your-github-username",
+  organizationName: "HT-MA",
   projectName: "devops-interview-guide",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -23,7 +24,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
-          editUrl: "https://github.com/your-github-username/devops-interview-guide/edit/main/",
+          editUrl: "https://github.com/HT-MA/devops-interview-guide/edit/main/",
         },
         blog: {
           showReadingTime: true,
@@ -31,7 +32,7 @@ const config: Config = {
             type: ["rss", "atom"],
             xslt: true,
           },
-          editUrl: "https://github.com/your-github-username/devops-interview-guide/edit/main/",
+          editUrl: "https://github.com/HT-MA/devops-interview-guide/edit/main/",
           onInlineTags: "warn",
           onInlineAuthors: "warn",
           onUntruncatedBlogPosts: "warn",
@@ -63,7 +64,7 @@ const config: Config = {
           position: "right",
         },
         {
-          href: "https://github.com/your-github-username/devops-interview-guide",
+          href: "https://github.com/HT-MA/devops-interview-guide",
           position: "right",
           className: "header-github-link",
           "aria-label": "GitHub repository",
@@ -116,7 +117,7 @@ const config: Config = {
           items: [
             {
               label: "GitHub",
-              href: "https://github.com/your-github-username/devops-interview-guide",
+              href: "https://github.com/HT-MA/devops-interview-guide",
             },
           ],
         },
