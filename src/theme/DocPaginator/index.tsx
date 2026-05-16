@@ -1,12 +1,13 @@
 import React from 'react';
 import type { ComponentProps } from '@docusaurus/types';
+import styles from './styles.module.css';
 
 type Props = ComponentProps<'DocPaginator'>;
 
 export default function DocPaginator(props: Props): JSX.Element {
   return (
     <nav className="pagination-nav" aria-label="文档分页">
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+      <div className={styles.paginatorContainer}>
         {props.previous && (
           <a className="pagination-nav__link" href={props.previous.permalink}>
             <div className="pagination-nav__label">← 上一页</div>
