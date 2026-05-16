@@ -2,6 +2,7 @@ import Link from "@docusaurus/Link";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 import Heading from "@theme/Heading";
+import React from "react";
 import {
   Terminal,
   Container,
@@ -11,21 +12,18 @@ import {
   Gauge,
   Wrench,
   Cloud,
-  Sparkles,
   ArrowRight,
   BookOpen,
-  Layers,
   Lightbulb,
   Star,
-  GitPullRequest,
   Cpu,
   Shield,
 } from "lucide-react";
 
 function GitHubIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.908 24 17.592 24 12c0-6.627-5.373-12-12-12z" />
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12c0-6.627-5.373-12-12-12z" />
     </svg>
   );
 }
@@ -38,115 +36,122 @@ interface Feature {
   description: string;
   link: string;
   accent: string;
+  tags: string[];
 }
 
 const features: Feature[] = [
   {
-    icon: <Terminal size={24} />,
+    icon: <Terminal size={16} />,
     title: "Linux",
-    description: "进程管理、内存分析、CPU 调优、网络配置、Shell 脚本等核心知识点",
+    description: "Process management, memory analysis, CPU tuning, networking, shell scripting and systemd.",
     link: "/docs/linux/",
-    accent: "emerald",
+    accent: "#ff6b35",
+    tags: ["Process", "Memory", "Network"],
   },
   {
-    icon: <Container size={24} />,
+    icon: <Container size={16} />,
     title: "Docker",
-    description: "容器基础、多阶段构建、网络模型、存储驱动与安全加固",
+    description: "Multi-stage builds, network models, storage drivers, security best practices and optimization.",
     link: "/docs/docker/",
-    accent: "blue",
+    accent: "#00a2ff",
+    tags: ["Dockerfile", "Network"],
   },
   {
-    icon: <Ship size={24} />,
+    icon: <Ship size={16} />,
     title: "Kubernetes",
-    description: "Pod 生命周期、Service Mesh、Ingress、ConfigMap、RBAC 等高频考点",
+    description: "Pod lifecycle, Service Mesh, Ingress controllers, ConfigMap, RBAC, and scheduling policies.",
     link: "/docs/kubernetes/",
-    accent: "violet",
+    accent: "#6f4cff",
+    tags: ["Pod", "Service", "Ingress"],
   },
   {
-    icon: <GitBranch size={24} />,
+    icon: <GitBranch size={16} />,
     title: "CI/CD",
-    description: "流水线设计、Jenkins、GitHub Actions、ArgoCD、渐进式发布",
+    description: "Pipeline design, GitHub Actions, Jenkins, ArgoCD, progressive delivery and rollback strategies.",
     link: "/docs/cicd/",
-    accent: "amber",
+    accent: "#10b981",
+    tags: ["Pipeline", "ArgoCD"],
   },
   {
-    icon: <Activity size={24} />,
-    title: "监控告警",
-    description: "Prometheus、Grafana、Loki、告警抑制、SLI 指标设计",
+    icon: <Activity size={16} />,
+    title: "Monitoring",
+    description: "Prometheus, Grafana dashboards, Loki logging, alerting rules, SLI metrics and on-call practices.",
     link: "/docs/monitoring/",
-    accent: "rose",
+    accent: "#f59e0b",
+    tags: ["Prometheus", "Grafana"],
   },
   {
-    icon: <Gauge size={24} />,
+    icon: <Gauge size={16} />,
     title: "SRE",
-    description: "SLO / SLI / SLA、故障管理、Chaos Engineering、灾备恢复",
+    description: "SLO/SLI/SLA design, incident management, observability, chaos engineering, disaster recovery.",
     link: "/docs/sre/",
-    accent: "purple",
+    accent: "#a855f7",
+    tags: ["SLO", "Incident"],
   },
   {
-    icon: <Wrench size={24} />,
-    title: "场景题",
-    description: "CPU 飙高、内存泄漏、网络超时、Pod 崩溃等真实案例排查",
+    icon: <Wrench size={16} />,
+    title: "Scenarios",
+    description: "Real-world troubleshooting: CPU spikes, memory leaks, network timeouts, pod crashes, DB slow queries.",
     link: "/docs/scenarios/",
-    accent: "cyan",
+    accent: "#06b6d4",
+    tags: ["Debug", "Production"],
   },
   {
-    icon: <Cloud size={24} />,
+    icon: <Cloud size={16} />,
     title: "Terraform",
-    description: "IaC 基础、State 管理、模块化设计、Multi-Provider 编排",
+    description: "IaC fundamentals, state management, modular design, multi-provider orchestration and best practices.",
     link: "/docs/terraform/",
-    accent: "teal",
+    accent: "#14b8a6",
+    tags: ["IaC", "State"],
   },
 ];
 
-function FeatureCard({ icon, title, description, link, accent }: Feature) {
+function TerminalPanel() {
   return (
-    <Link
-      className={`${styles.featureCard} ${styles[`accent${accent.charAt(0).toUpperCase() + accent.slice(1)}`]}`}
-      to={link}
-      aria-label={`${title} - ${description}`}
-    >
-      <div className={styles.featureIcon} aria-hidden="true">
-        {icon}
-      </div>
-      <Heading as="h3" className={styles.featureTitle}>
-        {title}
-      </Heading>
-      <p className={styles.featureDescription}>{description}</p>
-      <span className={styles.featureLink}>
-        浏览题库
-        <ArrowRight size={14} aria-hidden="true" />
-      </span>
-    </Link>
-  );
-}
-
-function TerminalMockup() {
-  return (
-    <div className={styles.terminalMockup} aria-hidden="true">
-      <div className={styles.terminalBar}>
-        <span className={styles.terminalDot} data-color="red" />
-        <span className={styles.terminalDot} data-color="yellow" />
-        <span className={styles.terminalDot} data-color="green" />
-        <span className={styles.terminalTitle}>devops ~ zsh</span>
-      </div>
-      <div className={styles.terminalBody}>
-        <span className={styles.terminalPrompt}>$</span> kubectl get pods --all-namespaces
-        <br />
-        <span className={styles.terminalOutput}>NAME &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;READY &nbsp; STATUS</span>
-        <br />
-        <span className={styles.terminalOutput}>api-server &nbsp; &nbsp; &nbsp;1/1 &nbsp; &nbsp; Running</span>
-        <br />
-        <span className={styles.terminalOutput}>nginx-proxy &nbsp; &nbsp; 3/3 &nbsp; &nbsp; Running</span>
-        <br />
-        <span className={styles.terminalPrompt}>$</span> docker-compose up -d
-        <br />
-        <span className={styles.terminalOutput}>Starting database... done</span>
-        <br />
-        <span className={styles.terminalOutput}>Starting redis... &nbsp; done</span>
-        <br />
-        <span className={styles.terminalPrompt}>$</span>
-        <span className={styles.terminalCursor} />
+    <div className={styles.terminalPanel}>
+      <div className={styles.terminalBox}>
+        <div className={styles.terminalBar}>
+          <span className={styles.terminalDot} data-color="red" />
+          <span className={styles.terminalDot} data-color="yellow" />
+          <span className={styles.terminalDot} data-color="green" />
+          <span style={{ marginLeft: "0.5rem" }}>bash — 80×24</span>
+        </div>
+        <div className={styles.terminalBody}>
+          <div className={styles.terminalLine}>
+            <span className={styles.terminalLinePrompt}>$</span>{" "}
+            <span className={styles.terminalLineCmd}>ls -la modules/</span>
+          </div>
+          <div className={styles.terminalLine}>
+            <span className={styles.terminalOutputPermissions}>drwxr-xr-x</span>{" "}
+            <span className={styles.terminalOutputDir}>linux</span>{" "}
+            <span className={styles.terminalOutputComment}># Process, Memory, CPU</span>
+          </div>
+          <div className={styles.terminalLine}>
+            <span className={styles.terminalOutputPermissions}>drwxr-xr-x</span>{" "}
+            <span className={styles.terminalOutputDir}>docker</span>{" "}
+            <span className={styles.terminalOutputComment}># Build, Network, Security</span>
+          </div>
+          <div className={styles.terminalLine}>
+            <span className={styles.terminalOutputPermissions}>drwxr-xr-x</span>{" "}
+            <span className={styles.terminalOutputDir}>kubernetes</span>{" "}
+            <span className={styles.terminalOutputComment}># Pod, Service, Ingress</span>
+          </div>
+          <div className={styles.terminalLine}>
+            <span className={styles.terminalOutputPermissions}>drwxr-xr-x</span>{" "}
+            <span className={styles.terminalOutputDir}>cicd</span>{" "}
+            <span className={styles.terminalOutputComment}># Pipeline, ArgoCD</span>
+          </div>
+          <div className={styles.terminalLine}>
+            <span className={styles.terminalOutputPermissions}>drwxr-xr-x</span>{" "}
+            <span className={styles.terminalOutputDir}>monitoring</span>{" "}
+            <span className={styles.terminalOutputComment}># Prometheus, Grafana</span>
+          </div>
+          <div style={{ marginTop: "0.3rem" }}>
+            <span className={styles.terminalLinePrompt}>$</span>{" "}
+            <span style={{ color: "rgba(255,255,255,0.4)" }}>_</span>
+            <span className={styles.terminalBlink} />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -156,31 +161,20 @@ function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
   return (
     <header className={styles.hero}>
-      <div className={styles.heroGlowOrb} aria-hidden="true" />
       <div className={styles.heroContainer}>
         <div className={styles.heroContent}>
+          <div className={styles.heroLabel}>// devops-interview-guide</div>
           <Heading as="h1" className={styles.heroTitle}>
-            <span>{siteConfig.title}</span>
+            Master Your{" "}
+            <span className={styles.heroAccent}>DevOps</span> Interview
           </Heading>
-          <p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
-          <div className={styles.heroBadges}>
-            <span className={styles.badge}>
-              <Sparkles size={14} aria-hidden="true" />
-              1000+ 高频题目
-            </span>
-            <span className={styles.badge}>
-              <Shield size={14} aria-hidden="true" />
-              真实生产案例
-            </span>
-            <span className={styles.badge}>
-              <Star size={14} aria-hidden="true" />
-              持续更新
-            </span>
-          </div>
+          <p className={styles.heroSubtitle}>
+            {siteConfig.tagline}
+          </p>
           <div className={styles.heroButtons}>
             <Link className={styles.primaryButton} to="/docs/linux/">
-              开始学习
-              <ArrowRight size={18} aria-hidden="true" />
+              Start Learning
+              <ArrowRight size={16} aria-hidden="true" />
             </Link>
             <Link
               className={styles.secondaryButton}
@@ -191,33 +185,82 @@ function HomepageHeader() {
               GitHub
             </Link>
           </div>
+          <div className={styles.terminalStrip}>
+            <span className={styles.terminalPrompt}>$</span>
+            <span>git clone </span>
+            <span className={styles.terminalPath}>github.com/HT-MA/devops-interview-guide</span>
+            <span className={styles.terminalCursor} />
+          </div>
         </div>
-        <TerminalMockup />
+        <TerminalPanel />
       </div>
     </header>
   );
 }
 
-function StatsSection() {
+function StatsBar() {
   const stats = [
-    { number: "1000+", label: "高频题目", icon: <BookOpen size={22} aria-hidden="true" /> },
-    { number: "10+", label: "核心模块", icon: <Layers size={22} aria-hidden="true" /> },
-    { number: "50+", label: "真实场景", icon: <Lightbulb size={22} aria-hidden="true" /> },
-    { number: "持续", label: "更新迭代", icon: <Cpu size={22} aria-hidden="true" /> },
+    { number: "1000+", label: "Questions", accent: false },
+    { number: "10", label: "Modules", accent: false },
+    { number: "50+", label: "Scenarios", accent: false },
+    { number: "Free", label: "Open Source", accent: true },
   ];
 
   return (
-    <section className={styles.statsSection}>
-      <div className={styles.statsGrid}>
-        {stats.map((stat, index) => (
-          <div key={index} className={styles.statItem}>
-            <div className={styles.statIcon} aria-hidden="true">
-              {stat.icon}
-            </div>
-            <div className={styles.statNumber}>{stat.number}</div>
-            <div className={styles.statLabel}>{stat.label}</div>
+    <div className={styles.statsBar}>
+      {stats.map((stat, i) => (
+        <div key={i} className={styles.statItem}>
+          <div className={stat.accent ? styles.statNumberAccent : styles.statNumber}>
+            {stat.number}
           </div>
-        ))}
+          <div className={styles.statLabel}>{stat.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, description, link, accent, tags }: Feature) {
+  return (
+    <Link className={styles.featureCard} to={link} aria-label={`${title} - ${description}`}>
+      <div
+        className={styles.featureIconBox}
+        style={{
+          background: `${accent}15`,
+          border: `1px solid ${accent}25`,
+          color: accent,
+        }}
+      >
+        {icon}
+      </div>
+      <Heading as="h3" className={styles.featureTitle}>
+        {title}
+      </Heading>
+      <p className={styles.featureDescription}>{description}</p>
+      {tags.length > 0 && (
+        <div className={styles.featureTags}>
+          {tags.map((tag) => (
+            <span key={tag} className={styles.featureTag}>{tag}</span>
+          ))}
+        </div>
+      )}
+    </Link>
+  );
+}
+
+function FeaturesSection() {
+  return (
+    <section className={`${styles.section} ${styles.altSection}`}>
+      <div className={styles.sectionContainer}>
+        <div className={styles.sectionHeader}>
+          <Heading as="h2" className={styles.sectionTitle}>Core Modules</Heading>
+          <p className={styles.sectionSubtitle}>Everything you need for DevOps interview prep</p>
+        </div>
+        <div className={styles.featuresGrid}>
+          {features.map((props, idx) => (
+            <FeatureCard key={idx} {...props} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -227,43 +270,37 @@ function LearningPath() {
   const steps = [
     {
       step: "01",
-      icon: <BookOpen size={28} aria-hidden="true" />,
-      title: "系统学习",
-      description: "按模块浏览 1000+ 高频面试题，从基础到高级循序渐进",
+      title: "Master the Fundamentals",
+      description: "Browse 1000+ questions across all modules, from Linux basics to Kubernetes advanced topics.",
     },
     {
       step: "02",
-      icon: <Wrench size={28} aria-hidden="true" />,
-      title: "场景实战",
-      description: "通过真实生产案例排查问题，提升动手能力和排错经验",
+      title: "Practice Real Scenarios",
+      description: "Troubleshoot real production incidents: CPU spikes, memory leaks, network failures, and pod crashes.",
     },
     {
       step: "03",
-      icon: <Star size={28} aria-hidden="true" />,
-      title: "面试通关",
-      description: "覆盖大厂高频考点，助你拿下心仪的 DevOps/SRE Offer",
+      title: "Ace the Interview",
+      description: "Cover big tech high-frequency topics and get the DevOps/SRE offer you deserve.",
     },
   ];
 
   return (
-    <section className={styles.learningSection}>
-      <div className={styles.sectionHeader}>
-        <Heading as="h2">学习路径</Heading>
-        <p>三步走，系统化提升 DevOps 面试竞争力</p>
-      </div>
-      <div className={styles.learningGrid}>
-        {steps.map((step, index) => (
-          <div key={index} className={styles.learningCard}>
-            <div className={styles.learningStep}>{step.step}</div>
-            <div className={styles.learningIcon} aria-hidden="true">
-              {step.icon}
+    <section className={styles.section}>
+      <div className={styles.sectionContainer}>
+        <div className={styles.sectionHeader}>
+          <Heading as="h2" className={styles.sectionTitle}>Your Learning Path</Heading>
+          <p className={styles.sectionSubtitle}>A structured approach to mastering DevOps interviews</p>
+        </div>
+        <div className={styles.learningGrid}>
+          {steps.map((step, i) => (
+            <div key={i} className={styles.learningCard}>
+              <div className={styles.learningStepLabel}>STEP {step.step}</div>
+              <Heading as="h3" className={styles.learningTitle}>{step.title}</Heading>
+              <p className={styles.learningDescription}>{step.description}</p>
             </div>
-            <Heading as="h3" className={styles.learningTitle}>
-              {step.title}
-            </Heading>
-            <p className={styles.learningDescription}>{step.description}</p>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -272,27 +309,21 @@ function LearningPath() {
 function CTASection() {
   return (
     <section className={styles.ctaSection}>
-      <div className={styles.ctaGlow} aria-hidden="true" />
-      <div className={styles.ctaContent}>
-        <Heading as="h2" className={styles.ctaTitle}>
-          准备开始了吗？
-        </Heading>
-        <p className={styles.ctaDescription}>
-          1000+ 题目、50+ 真实场景，助你拿下 DevOps 面试
-        </p>
+      <div className={styles.ctaCard}>
+        <Heading as="h2" className={styles.ctaTitle}>Ready to Level Up?</Heading>
+        <p className={styles.ctaDescription}>1000+ questions, 50+ real scenarios — all free and open source.</p>
         <div className={styles.ctaButtons}>
           <Link className={styles.primaryButton} to="/docs/linux/">
-            开始学习
-            <ArrowRight size={18} aria-hidden="true" />
+            Start Learning
+            <ArrowRight size={16} aria-hidden="true" />
           </Link>
           <Link
             className={styles.ctaSecondaryButton}
             to="https://github.com/HT-MA/devops-interview-guide"
             aria-label="Star on GitHub"
           >
-            <Star size={18} aria-hidden="true" />
+            <Star size={16} aria-hidden="true" />
             Star on GitHub
-            <GitPullRequest size={18} aria-hidden="true" />
           </Link>
         </div>
       </div>
@@ -303,26 +334,16 @@ function CTASection() {
 export default function Home(): JSX.Element {
   return (
     <Layout
-      title="DevOps 面试知识库"
+      title="DevOps Interview Handbook"
       description="云原生 / SRE / Kubernetes / CI-CD 面试知识库，包含 1000+ 高频题目和真实生产案例"
     >
-      <HomepageHeader />
-      <main>
-        <StatsSection />
-        <section className={styles.featuresSection}>
-          <div className={styles.sectionHeader}>
-            <Heading as="h2">核心模块</Heading>
-            <p>覆盖 DevOps 工程师面试的所有核心技术领域</p>
-          </div>
-          <div className={styles.featuresGrid}>
-            {features.map((props, idx) => (
-              <FeatureCard key={idx} {...props} />
-            ))}
-          </div>
-        </section>
+      <div className={styles.pageWrapper}>
+        <HomepageHeader />
+        <StatsBar />
+        <FeaturesSection />
         <LearningPath />
         <CTASection />
-      </main>
+      </div>
     </Layout>
   );
 }
