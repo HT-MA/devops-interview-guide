@@ -1,0 +1,231 @@
+---
+title: Pod 生命周期
+description: Kubernetes Pod 生命周期与状态管理
+---
+
+<HeroBlock
+  title="Pod 生命周期"
+  description="深入理解 Kubernetes Pod 从创建到终止的完整生命周期，掌握状态管理、探针配置和故障排查的核心知识。"
+  tags={["Kubernetes", "Pod", "Lifecycle"]}
+  difficulty="intermediate"
+  readTime="8 min"
+/>
+
+<TLDRBlock>
+
+**Pod 生命周期** 是 Kubernetes 中最核心的概念之一。
+
+- **Pod Phase** — Pending → Running → Succeeded/Failed
+- **Init Container** — 在主容器启动前按顺序执行
+- **Probes** — Liveness（重启）、Readiness（流量）、Startup（慢启动保护）
+- **Hooks** — PostStart（启动后）、PreStop（优雅终止）
+- **RestartPolicy** — Always / OnFailure / Never
+
+</TLDRBlock>
+
+## Pod 生命周期流程图
+
+<ArchitectureBlock caption="Kubernetes Pod 生命周期状态转换">
+
+```
+                    ┌─────────────────────┐
+                    │     Pending         │
+                    │  (调度+拉取镜像)    │
+                    └──────────┬──────────┘
+                               ▼
+                    ┌─────────────────────┐
+                    │     Running          │
+                    │  Init容器→主容器运行 │
+                    └──────────┬──────────┘
+                               ▼
+                    ┌─────────────────────┐
+                    │    Succeeded         │
+                    │  (正常完成退出码=0)  │
+                    └─────────────────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │     Failed          │
+                    │  (异常退出退出码≠0) │
+                    └─────────────────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │    CrashLoopBackOff │
+                    │  (容器重启循环)     │
+                    └─────────────────────┘
+```
+
+</ArchitectureBlock>
+
+## Pod 相位 (Phase)
+
+| Phase | 说明 |
+|-------|------|
+| Pending | Pod 已被 Kubernetes 系统接受，等待调度 |
+| Running | Pod 已绑定到节点，容器已创建 |
+| Succeeded | 所有容器正常退出，不会重启 |
+| Failed | 所有容器已终止，至少一个容器失败 |
+| Unknown | 无法获取 Pod 状态 |
+
+## Init Container
+
+<CalloutBlock type="tip" title="关键概念">
+
+Init Container 在主容器启动之前按顺序执行。所有 Init Container 必须成功完成，主容器才会启动。常用于：等待依赖服务就绪、数据库初始化、文件权限设置。
+
+</CalloutBlock>
+
+<CommandBlock
+  label="init-container.yaml"
+  lang="yaml"
+  command={`apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+spec:
+  initContainers:
+  - name: init-db
+    image: busybox:1.36
+    command: ['sh', '-c', 'until nslookup db-service; do echo waiting for db; sleep 2; done']
+  - name: init-cache
+    image: busybox:1.36
+    command: ['sh', '-c', 'sleep 5']
+  containers:
+  - name: myapp
+    image: myapp:v1
+    ports:
+    - containerPort: 8080`}
+/>
+
+## Probes 探针
+
+### Liveness Probe vs Readiness Probe
+
+<CalloutBlock type="interview">
+
+**高频面试题**: Liveness Probe 和 Readiness Probe 的区别是什么？
+
+- **Liveness**: 容器是否存活。失败 → 重启容器。用于检测死锁、无限循环等无法自行恢复的状态。
+- **Readiness**: 容器是否就绪接收流量。失败 → 从 Service Endpoints 移除。用于检测依赖服务（数据库、缓存）是否可用。
+- **Startup**: 慢启动容器保护。在 Startup Probe 成功之前，Liveness 和 Readiness 不生效。
+
+</CalloutBlock>
+
+<CommandBlock
+  label="probes.yaml"
+  lang="yaml"
+  command={`apiVersion: v1
+kind: Pod
+metadata:
+  name: probes-demo
+spec:
+  containers:
+  - name: app
+    image: myapp:v1
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 15
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    startupProbe:
+      httpGet:
+        path: /startup
+        port: 8080
+      failureThreshold: 30
+      periodSeconds: 10`}
+/>
+
+## Interview Focus
+
+<InterviewFocusBlock
+  questions={[
+    {
+      q: "Pod 的生命周期有哪些状态？状态之间如何转换？",
+      intent: "考察对 Pod 状态机的理解深度，尤其是 Pending 阶段发生了什么（调度 + 镜像拉取 + 卷挂载）",
+      tip: "不仅要说出状态名称，更要解释状态转换的条件和每个阶段的底层操作",
+      difficulty: "intermediate"
+    },
+    {
+      q: "Liveness Probe 和 Readiness Probe 的区别？什么场景下需要 Startup Probe？",
+      intent: "考察探针的实战经验，尤其是 Readiness Probe 对 Service 流量分发的影响",
+      tip: "结合真实场景说明：比如 Java 应用慢启动需要 Startup Probe 保护，数据库迁移时要让 Readiness 返回 false",
+      difficulty: "intermediate"
+    },
+    {
+      q: "Pod 一直处于 Pending 状态，如何排查？",
+      intent: "考察故障排查的系统方法论和 kubectl 命令熟练度",
+      tip: "按顺序排查：kubectl describe pod → Events → 节点资源 → 调度器日志 → PVC/ConfigMap",
+      difficulty: "advanced"
+    }
+  ]}
+/>
+
+## 常见故障排查
+
+<TroubleshootingBlock
+  issues={[
+    {
+      name: "Pod Pending",
+      description: "调度失败或镜像拉取中。检查节点资源 (CPU/Memory)、PVC 绑定、NodeSelector 匹配。",
+      slug: "scenarios/pod-crash"
+    },
+    {
+      name: "CrashLoopBackOff",
+      description: "容器反复崩溃重启。查看 kubectl logs --previous 获取上次崩溃日志。",
+      slug: "scenarios/pod-crash"
+    },
+    {
+      name: "ImagePullBackOff",
+      description: "镜像拉取失败。检查镜像名称/tag 是否正确，ImagePullSecret 是否配置。",
+      slug: "scenarios/pod-crash"
+    },
+    {
+      name: "Node NotReady",
+      description: "节点不可用。检查 kubelet 状态、磁盘压力、网络连通性。"
+    }
+  ]}
+/>
+
+## Production Advice
+
+<ProductionAdviceBlock
+  advice={[
+    {
+      type: "best-practice",
+      title: "始终配置 Liveness + Readiness",
+      description: "不要依赖默认行为。Liveness 防止死锁，Readiness 控制流量切换，缺一不可。"
+    },
+    {
+      type: "security",
+      title: "使用 securityContext 限制权限",
+      description: "设置 runAsNonRoot: true，限制 capabilities，配置 readOnlyRootFilesystem。"
+    },
+    {
+      type: "scaling",
+      title: "合理设置 resources.requests",
+      description: "requests 决定调度决策，limits 防止资源争抢。requests 设太低会导致节点过载。"
+    },
+    {
+      type: "monitoring",
+      title: "监控 Pod 重启次数",
+      description: "设置告警：Pod restarts > 5 in 10m。频繁重启往往是应用 bug 或资源不足的信号。"
+    }
+  ]}
+/>
+
+<CalloutBlock type="production">
+
+**生产环境检查清单**:
+- 所有 Pod 配置了 Liveness + Readiness Probe
+- Init Container 有合理的超时和重试机制
+- PreStop Hook 确保优雅终止（处理进行中的请求）
+- PodDisruptionBudget 保证高可用
+- 设置了合理的 terminationGracePeriodSeconds
+
+</CalloutBlock>
