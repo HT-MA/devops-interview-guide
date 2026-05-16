@@ -279,7 +279,7 @@ table tr:last-child td {
   font-size: 0.65rem;
   font-weight: 500;
   margin-right: 0.25rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--ifm-color-emphasis-100);
   color: var(--ifm-color-emphasis-600);
   border: 1px solid var(--card-border);
 }
@@ -399,15 +399,7 @@ table tr:last-child td {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
 
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
