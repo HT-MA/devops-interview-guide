@@ -13,11 +13,7 @@ import {
   Wrench,
   Cloud,
   ArrowRight,
-  BookOpen,
-  Lightbulb,
   Star,
-  Cpu,
-  Shield,
 } from "lucide-react";
 
 function GitHubIcon() {
