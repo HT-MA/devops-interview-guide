@@ -6,7 +6,7 @@ const customWebpackPlugin = require("./webpack-custom-plugin.js");
 
 const config: Config = {
   title: "DevOps Interview Handbook",
-  tagline: "云原生 / SRE / Kubernetes / CI-CD 面试知识库",
+  tagline: "云原生 / SRE / Kubernetes / CI-CD 面试知识库 — 1000+ 高频题目，免费开源",
   favicon: "img/logo.svg",
   url: "https://HT-MA.github.io",
   baseUrl: "/devops-interview-guide/",
@@ -14,6 +14,20 @@ const config: Config = {
   projectName: "devops-interview-guide",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
+
+  stylesheets: [
+    {
+      href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
+      rel: "preload",
+      as: "style",
+    },
+    {
+      href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
+      rel: "stylesheet",
+      media: "print",
+      onLoad: "this.media='all'",
+    },
+  ],
 
   i18n: {
     defaultLocale: "zh-Hans",
@@ -53,7 +67,7 @@ const config: Config = {
   themeConfig: {
     image: "img/social-card.jpg",
     navbar: {
-      title: "DevOps Interview",
+      title: "DevOps Handbook",
       logo: {
         alt: "DevOps Interview Logo",
         src: "img/logo.svg",
