@@ -1,0 +1,606 @@
+---
+id: interview-network
+title: 网络管理面试题
+description: Linux 网络管理高频面试题，涵盖 TCP 调优、conntrack、iptables/nftables、网络命名空间、veth、bridge、DPDK 等真实面试场景
+---
+
+# Linux 网络管理面试题
+
+## Q1: 你们在生产环境中对 TCP 做过哪些调优？说几个你用过的最重要的内核参数。
+
+**难度**: ⚫⚫⚪ 中级 | **面试公司**: 阿里、腾讯、字节跳动、美团
+
+**答案要点**:
+- TCP 连接数优化：tw_reuse、tw_recycle（已废弃）、tcp_fin_timeout、tcp_max_tw_buckets
+- TCP 缓冲区：tcp_rmem、tcp_wmem、tcp_mem 三组参数控制收发和系统级内存
+- 拥塞控制：BBR vs CUBIC，延迟敏感场景 BBR 更适合
+- 连接队列：tcp_max_syn_backlog、somaxconn、tcp_abort_on_overflow
+
+**完整回答**:
+
+TCP 调优是面试中的高频题。实际生产中 TCP 层面的问题占了网络问题的很大比例。我根据自己的经验按场景来梳理。
+
+**场景一：高并发短连接（Nginx 反向代理、微服务网关）**
+
+这类场景最常见的现象是 TIME_WAIT 大量堆积，每个短连接关闭后端口和连接表项需要 60 秒才能释放。
+
+```bash
+# 查看当前 TIME_WAIT 数量
+ss -s
+# 或
+netstat -tan | grep TIME_WAIT | wc -l
+
+# 核心调优参数
+# /etc/sysctl.d/tcp-tuning.conf
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 15
+net.ipv4.tcp_max_tw_buckets = 2000000
+```
+
+- `tcp_tw_reuse = 1`：允许将 TIME_WAIT 状态的 socket 用于新的出站连接。注意它只对主动发起连接的一端有效（客户端角色），且需要开启时间戳选项。
+- `tcp_fin_timeout = 15`：缩短 FIN_WAIT_2 的超时时间，默认 60 秒。
+- `tcp_max_tw_buckets`：限制系统同时存在的 TIME_WAIT socket 总数，超过后新进入 TIME_WAIT 的 socket 会被直接关闭。设得太大可能耗尽内存，太小可能导致连接异常。
+
+这里要特别提一句：`tcp_tw_recycle` 在内核 4.12 之后已经彻底移除。它在 NAT 环境下会导致严重的连接问题（同一个 NAT 后面的机器时间戳不同步，让服务端丢弃合法 SYN 包），千万不要用。
+
+**场景二：大带宽高延迟（跨国传输、CDN）**
+
+默认的 CUBIC 拥塞控制算法在高速长距离链路上带宽利用率不高。BBR（Bottleneck Bandwidth and Round-trip）可以更好地利用带宽。
+
+```bash
+# 查看当前拥塞控制算法
+sysctl net.ipv4.tcp_congestion_control
+# 默认: cubic
+
+# 切换为 BBR（需要内核 4.9+）
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+
+# 验证
+sysctl net.ipv4.tcp_available_congestion_control
+# 应该包含 bbr
+```
+
+**场景三：TCP 缓冲区调优**
+
+TCP 收发缓冲区的大小直接影响吞吐量。默认值通常偏保守：
+
+```bash
+# TCP 读缓冲: min default max（bytes）
+net.ipv4.tcp_rmem = 4096 131072 6291456
+# TCP 写缓冲: min default max
+net.ipv4.tcp_wmem = 4096 65536 4194304
+# TCP 内存: low pressure max（pages）
+net.ipv4.tcp_mem = 88500 118000 177000
+
+# 通用缓冲区
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.core.rmem_default = 262144
+net.core.wmem_default = 262144
+```
+
+BDP（Bandwidth Delay Product）决定了缓冲区应该多大：`BDP = 带宽 x RTT`。如果带宽是 10Gbps，RTT 是 50ms，BDP 大约 62.5MB。缓冲区至少应该达到 BDP 值才能充分利用带宽。
+
+**连接队列**：
+
+```bash
+# SYN 队列长度
+net.ipv4.tcp_max_syn_backlog = 65536
+# ACCEPT 队列长度
+net.core.somaxconn = 65536
+# SYN 队列满时的行为：0=丢弃, 1=发送 RST
+net.ipv4.tcp_abort_on_overflow = 0
+```
+
+`somaxconn` 和应用的 backlog 参数配合使用——应用调用 `listen(fd, backlog)` 时，实际队列长度是 `min(backlog, somaxconn)`。Nginx 的 `listen 80 backlog=65535` 如果不同时调大 somaxconn 就无效。
+
+**追问**:
+- Q: TCP 的 TIME_WAIT 状态为什么是 2MSL？MSL 在多长时间？能缩短吗？
+- Q: BBR 和 CUBIC 相比有什么缺点？什么场景下 BBR 效果反而不好？
+- Q: tcp_keepalive_time、tcp_keepalive_intvl、tcp_keepalive_probes 是做什么的？和 HTTP Keep-Alive 是一回事吗？
+
+---
+
+## Q2: conntrack 是什么？有没有遇到过 conntrack 表满导致的问题？
+
+**难度**: ⚫⚫⚫ 高级 | **面试公司**: 字节跳动、阿里、华为
+
+**答案要点**:
+- conntrack（连接跟踪）是 netfilter 的核心模块，跟踪所有网络连接的状态
+- conntrack 表容量有限，默认值经常不够用，满了会丢包
+- conntrack 满的典型症状是新建 TCP 连接失败，但已有连接不受影响
+- 调优方向：增大 conntrack 上限、缩短超时时间、优化规则减少跟踪条目
+
+**完整回答**:
+
+conntrack 是面试中一个非常容易被问到但很多人说不清楚的考点。
+
+**conntrack 是什么**：
+
+conntrack（Connection Tracking，连接跟踪）是 Linux netfilter 框架的核心机制。它的作用是记录所有经过内核的网络连接的状态信息——包括连接的协议类型、源/目的 IP、端口、状态（ESTABLISHED/RELATED/NEW/INVALID）等。这些状态信息被 NAT、iptables state 模块、安全组等功能依赖。
+
+每个连接对应 conntrack 表中的一条记录。对于 TCP，一条记录从 SYN 开始跟踪，到 FIN/RST 后等待超时删除。对于 UDP，因为没有连接概念，conntrack 根据"发送和接收的间隔"判断超时。
+
+**conntrack 表满的典型症状**：
+
+当 conntrack 表满了，内核会直接丢弃新连接的数据包（但已有连接不受影响），通过 `dmesg` 可以看到：
+
+```bash
+dmesg | grep conntrack
+# kernel: nf_conntrack: table full, dropping packet
+```
+
+症状表现为：
+- 新 TCP 连接无法建立，curl 超时
+- DNS 查询失败（DNS 也是 UDP，需要创建 conntrack 条目）
+- 但从服务器内部看 CPU 和内存都正常，端口也没问题
+- ss -s 看到的连接数可能并不高（因为 conntrack 还记录了 UDP 等无状态协议）
+
+**排查和调优**：
+
+```bash
+# 查看当前 conntrack 使用量
+cat /proc/sys/net/netfilter/nf_conntrack_count
+# 查看最大容量
+cat /proc/sys/net/netfilter/nf_conntrack_max
+
+# 统计各协议类型的 conntrack 条目
+cat /proc/net/nf_conntrack | awk '{print $1}' | sort | uniq -c | sort -rn
+# 输出类似：
+# 50000 ipv4  udp
+# 30000 ipv4  tcp
+#    200 ipv4  icmp
+
+# 实时查看 conntrack 内容
+conntrack -L
+
+# 统计 conntrack 条目按目的 IP 聚合
+conntrack -L | awk '{print $5}' | cut -d= -f2 | sort | uniq -c | sort -rn | head -10
+```
+
+**生产环境调优**：
+
+```bash
+# /etc/sysctl.d/conntrack-tuning.conf
+
+# 增大 conntrack 表容量（根据内存大小调整，每 1GB 内存约 8-16 万条）
+net.netfilter.nf_conntrack_max = 2097152
+
+# 缩短各协议的超时时间
+net.netfilter.nf_conntrack_tcp_timeout_established = 43200   # 12小时 -> 6小时
+net.netfilter.nf_conntrack_tcp_timeout_time_wait = 120       # 2分钟
+net.netfilter.nf_conntrack_tcp_timeout_close_wait = 60       # 60秒
+net.netfilter.nf_conntrack_udp_timeout = 30                  # 30秒
+net.netfilter.nf_conntrack_udp_timeout_stream = 120          # 2分钟
+net.netfilter.nf_conntrack_icmp_timeout = 10                 # 10秒
+```
+
+**真实案例**：
+
+某次在阿里云上管理了一组 Kubernetes 节点，运行 NodePort 类型的 Service。在业务高峰期，节点突然出现大量"Connection refused"错误。排查过程：
+- 首先检查端口监听：ss -tlnp，服务正常
+- 检查 iptables 规则：iptables -L -n，规则冗长但序列正常
+- dmesg 发现"nf_conntrack: table full, dropping packet"
+- 检查 conntrack 统计：nf_conntrack_count 达到了默认最大值 655360
+- 发现大量 DNS 查询的 conntrack 条目（UDP 超时时间长，且 CoreDNS 查询频繁）
+- 临时方案：增大 nf_conntrack_max 到 2097152
+- 根本方案：使用本地 DNS 缓存（Nodelocal DNSCache），减少到集群外部 DNS 的查询量
+
+**追问**:
+- Q: conntrack 在大流量下有什么性能问题？有没有替代方案？
+- Q: Kubernetes 中的 Service 和 conntrack 有什么关系？NodePort 为什么需要 conntrack？
+- Q: nf_conntrack 和 NAT 的关系是什么？SNAT/DNAT 怎么影响 conntrack 条目？
+
+---
+
+## Q3: iptables 和 nftables 有什么区别？从 iptables 迁移到 nftables 需要注意什么？
+
+**难度**: ⚫⚫⚪ 中级 | **面试公司**: 腾讯、华为、字节跳动
+
+**答案要点**:
+- nftables 是 iptables 的后继者，使用了更高效的虚拟机架构和协议无关的规则集
+- nftables 规则集支持原子替换（一次更新所有规则），iptables 需要逐条操作
+- nftables 语法更简洁统一，不再有多个表（filter/nat/mangle）的割裂
+- 迁移后检查 conntrack 和内核版本对 nftables 功能的支持
+
+**完整回答**:
+
+**架构差异**：
+
+iptables 基于 netfilter 框架，使用多个钩子点（PREROUTING/INPUT/FORWARD/OUTPUT/POSTROUTING）和多个表（filter/nat/mangle/raw/security）。每条规则逐个遍历匹配，规则数量增加时性能线性下降。
+
+nftables 也基于 netfilter，但它的规则集被编译成字节码在内核虚拟机中执行。新的设计带来了几个关键改进：
+- **原子替换**：nftables 可以用一条命令替换整个规则集，不会出现 iptables 那种"清空规则到重新加载之间有安全窗口"的问题
+- **协议无关**：不再区分 IPv4 和 IPv6 的规则表，同一套规则可以同时匹配两个协议族
+- **集合和映射**：支持 named sets 和 maps，可以将大量 IP 或端口定义在一个集合中，查找效率远高于逐条匹配
+- **链式处理**：nftables 的 chains 可以独立更新，不像 iptables 的 chain 是和 hook 绑定的
+
+**性能差异**：
+
+```bash
+# iptables 大量规则时的性能问题
+iptables -A INPUT -s 10.0.0.1 -j ACCEPT
+iptables -A INPUT -s 10.0.0.2 -j ACCEPT
+# ... 10000 条类似规则，每个数据包都要遍历
+
+# nftables 使用集合替代
+nft add set filter whitelist { type ipv4_addr \; }
+nft add element filter whitelist { 10.0.0.1, 10.0.0.2, ... }
+nft add rule filter input ip saddr @whitelist accept
+# 集合使用哈希表查找，O(1) 复杂度
+```
+
+当规则数量超过几千条时，nftables 的集合查找性能远胜 iptables。
+
+**语法对比**：
+
+```bash
+# iptables 语法
+iptables -A INPUT -p tcp --dport 80 -s 10.0.0.0/8 -j ACCEPT
+
+# nftables 等价语法
+nft add rule inet filter input tcp dport 80 ip saddr 10.0.0.0/8 accept
+```
+
+**迁移注意事项**：
+
+```bash
+# 使用 iptables-translate 工具查看等价 nftables 命令
+iptables-translate -A INPUT -p tcp --dport 80 -j ACCEPT
+# nft add rule ip filter INPUT tcp dport 80 accept
+
+# 使用 iptables-nft 兼容层
+# 保持 iptables 语法不变，底层使用 nftables 内核模块
+# 适合迁移过渡期
+```
+
+- **Docker/Kubernetes 兼容性**：Docker 默认使用 iptables 管理网络规则，kube-proxy 在 iptables 模式下也直接操作 iptables。使用 `iptables-nft` 兼容层可以让容器编排系统透明切换到 nftables。
+- **conntrack 工具兼容**：nftables 下的 conntrack 工具仍然可用，命令不变。
+- **内核版本要求**：nftables 的功能依赖于内核版本，部分高级特性（如 sets with timeout）需要内核 4.18+。
+
+**生产环境实践**：
+
+目前大多数云原生环境采用"混合模式"：
+- 系统防火墙使用 nftables（一致性好、管理方便）
+- Docker/Kubernetes 使用 iptables-nft 兼容层
+
+Ubuntu 22.04+、Debian 11+、RHEL 9+ 都默认使用 nftables 内核模块。
+
+**追问**:
+- Q: nftables 的 set 和 map 在实际场景中怎么用？能用来做限速吗？
+- Q: iptables 的 raw 表在 nftables 中怎么实现？NOTRACK 目标还有吗？
+- Q: eBPF 会取代 iptables/nftables 吗？Cilium 的 eBPF 方案相比 nftables 有什么优势？
+
+---
+
+## Q4: Linux 网络命名空间是怎么工作的？它在容器网络中有哪些应用？
+
+**难度**: ⚫⚫⚪ 中级 | **面试公司**: 字节跳动、腾讯、华为
+
+**答案要点**:
+- 网络命名空间（netns）隔离网络协议栈：网卡、路由表、iptables 规则、socket 等
+- Docker 容器和 Kubernetes Pod 都依赖网络命名空间实现隔离
+- 物理网卡只能属于一个命名空间，veth pair 用于跨命名空间通信
+- 主机命名空间（default）管理所有物理设备，其他命名空间通过 veth 连通
+
+**完整回答**:
+
+**网络命名空间的基本概念**：
+
+Linux 的网络命名空间（Network Namespace）是对网络协议栈的隔离。每个 netns 拥有自己独立的：
+- 网络接口（lo、eth0 等）
+- 路由表和 FIB 表
+- 邻居表（ARP）
+- netfilter/iptables/nftables 规则
+- socket 和连接跟踪表
+- /proc/net 目录下的网络统计
+
+这种隔离意味着：命名空间 A 里起一个 Nginx 监听 80 端口，命名空间 B 里也可以起一个 Nginx 监听 80 端口，两者互不冲突。
+
+```bash
+# 创建和管理网络命名空间
+ip netns add red
+ip netns add blue
+
+# 查看命名空间列表
+ip netns list
+
+# 在命名空间中执行命令
+ip netns exec red ip addr
+ip netns exec red ping 8.8.8.8
+```
+
+**容器网络中的应用**：
+
+**Docker 网络**：
+- Docker 为每个容器创建一个独立的网络命名空间
+- 默认 bridge 模式下，创建 veth pair，一端在容器内（eth0），一端在 docker0 bridge 上
+- 容器和宿主机、容器和容器之间通过 bridge 和 iptables NAT 通信
+
+**Kubernetes Pod 网络**：
+- 一个 Pod 内的所有容器共享同一个网络命名空间（通过 Pod 级别的 infra container / pause 容器实现）
+- Pod 间的通信通过网络插件（CNI，如 Calico、Flannel、Cilium）实现
+- CNI 插件负责创建 veth pair、分配 IP、配置路由
+
+```bash
+# 查看 Pod 的网络命名空间
+# Pod 的网络命名空间对应 pause 容器的 netns
+# 在宿主机上可以通进入 Pod 的 netns 排查网络问题
+nsenter -t <pause-container-pid> -n
+
+# 或者通过 cni 工具
+ls /var/run/netns/
+```
+
+**排查技巧——进入容器网络命名空间**：
+
+```bash
+# 方法 1：使用 nsenter（需要容器 PID）
+docker inspect <container_id> --format '{{.State.Pid}}'
+nsenter -t <PID> -n -- ip addr
+
+# 方法 2：使用 ip netns 方式（需要 symlink）
+ln -sf /proc/<PID>/ns/net /var/run/netns/<container_id>
+ip netns exec <container_id> tcpdump -i eth0 -n
+
+# 方法 3：kubectl debug（Kubernetes 1.20+）
+kubectl debug -it <pod-name> --image=nicolaka/netshoot
+```
+
+**追问**:
+- Q: 网络命名空间的隔离边界在哪里？哪些网络资源是跨命名空间共享的？
+- Q: 多个网络命名空间之间如何实现通信？veth、bridge、macvlan 各自适合什么场景？
+- Q: Kubernetes 中，Calico 和 Flannel 的网络隔离方式有什么不同？Calico 也需要网络命名空间吗？
+
+---
+
+## Q5: veth 是什么？为什么容器网络用它？它和 tap/tun 设备有什么区别？
+
+**难度**: ⚫⚫⚪ 中级 | **面试公司**: 字节跳动、华为、腾讯
+
+**答案要点**:
+- veth（Virtual Ethernet）是一对虚拟网卡，成对出现，数据在一端发入从另一端收到
+- 每个容器网络命名空间内有一端 veth，另一端连接在宿主机 bridge 上
+- veth 是 L2 设备，传输的是完整以太帧
+- tun/tap 是用户态和内核协议栈之间的通道，veth 是内核内的虚拟网线
+
+**完整回答**:
+
+**veth 的工作原理**：
+
+veth（Virtual Ethernet）设备是一个虚拟网卡对（pair），它模拟了一根以太网线——在一端发送的数据帧会直接从另一端收到。veth 总是成对创建的，一端叫 veth0，另一端叫 veth1，数据在这两个设备之间直接传递。
+
+```bash
+# 创建 veth pair
+ip link add veth0 type veth peer name veth1
+
+# 将一端移到网络命名空间
+ip link set veth1 netns blue
+
+# 配置 IP 并启用
+ip addr add 10.0.1.1/24 dev veth0
+ip link set veth0 up
+ip netns exec blue ip addr add 10.0.1.2/24 dev veth1
+ip netns exec blue ip link set veth1 up
+
+# 现在两个命名空间可以通过 veth pair 通信
+ping 10.0.1.2
+```
+
+**veth 在容器网络中的应用**：
+
+每个 Docker 容器或 Kubernetes Pod 都需要一个网络接口接入网络。veth pair 是实现这个目标的核心机制：
+- veth pair 的一端（eth0）在容器的网络命名空间内
+- 另一端（vethXXXX）接在宿主机的 bridge（docker0/cni0）上
+- 数据从容器 eth0 发出，瞬间出现在宿主机 bridge 的 vethXXXX 端口上
+- bridge 根据 MAC 地址学习，将数据转发到其他端口（其他容器或物理网卡）
+
+```bash
+# 查看宿主机的 veth 对
+ip link show type veth
+# 输出示例：
+# 3: veth1@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noop master docker0
+# 这里的 if2 表示对端接口的索引（在容器内部）
+
+# 查看 veth 对端的标记（Linux 3.x 后）
+ethtool -S veth1 | grep peer
+```
+
+**veth 和 tap/tun 的区别**：
+
+这是一个面试中容易混淆的地方。
+
+- **tun (tunnel)**：L3 设备，处理 IP 包。用户态程序通过 `/dev/net/tun` 读写 IP 数据包。OpenVPN、WireGuard 使用 tun 设备。
+- **tap (terminal access point)**：L2 设备，处理以太帧。用户态程序读写完整以太帧。QEMU/KVM 虚拟机使用 tap 设备。
+- **veth**：纯内核虚拟设备，不经过用户态。数据在两端的内核协议栈之间直接传输。容器网络使用 veth。
+
+核心区别在于**数据是否经过用户态**：
+- veth：内核到内核，不需要用户态程序介入——性能好
+- tap/tun：内核到用户态再到内核——每次数据包都需要在用户态做一次中转，延迟更高
+
+veth 的问题：因为它从一端的内核协议栈出来直接进入另一端，两端都会完整经过协议栈处理。对于高吞吐场景（如 Service Mesh sidecar 流量劫持），数据在容器和宿主机之间的 veth 上反复穿越，额外占用 CPU。
+
+**追问**:
+- Q: veth pair 的 MTU 设置需要注意什么？和容器网络的 MTU 发现机制有什么关系？
+- Q: veth 对性能有什么影响？在大流量场景下如何优化？
+- Q: macvlan/ipvlan 和 veth+bridge 方案相比，性能上有什么区别？各有什么适用场景？
+
+---
+
+## Q6: Linux Bridge 是怎么工作的？和 OVS（Open vSwitch）有什么区别？
+
+**难度**: ⚫⚫⚪ 中级 | **面试公司**: 腾讯、阿里、字节跳动
+
+**答案要点**:
+- Linux Bridge 是内核实现的虚拟交换机，基于 MAC 地址学习和转发
+- 支持 STP、VLAN 过滤、IGMP snooping 等基本 L2 功能
+- OVS 支持 OpenFlow、流表、GRE/VXLAN/Geneve 隧道封装、QoS，功能更丰富
+- 容器场景：Docker 默认使用 Linux Bridge，Kubernetes 中部分 CNI 插件使用 OVS
+
+**完整回答**:
+
+**Linux Bridge 的工作原理**：
+
+Linux Bridge 是一个内核模块实现的虚拟 L2 交换机，行为上和一盒硬件交换机一样——基于 MAC 地址表转发数据帧：
+
+```
++----------+  +----------+  +----------+  +----------+
+| container|  | container|  |    VM    |  |   eth0   |
+|  (veth)  |  |  (veth)  |  |  (tap)   |  |(物理网卡)|
++-----+----+  +-----+----+  +-----+----+  +-----+----+
+      |             |             |             |
+      +------+------+------+------+------+------+
+             |             |             |
+           veth1         veth2         eth0
+             |             |             |
+         +-------------------------------------+
+         |          Linux bridge (br0)          |
+         +-------------------------------------+
+```
+
+当数据帧到达 bridge 的一个端口时，bridge 的工作流程：
+- 学习源 MAC 地址和端口的对应关系，更新 MAC 表（FDB）
+- 根据目的 MAC 地址查找 MAC 表：
+  - 找到：只从对应端口转发
+  - 没找到：从所有端口泛洪（flood）
+  - 目的 MAC 是广播/组播：从所有端口泛洪
+
+```bash
+# 创建和管理 bridge
+ip link add br0 type bridge
+ip link set eth0 master br0
+ip link set veth1 master br0
+ip link set br0 up
+
+# 查看 MAC 地址表
+bridge fdb show
+# 查看 bridge 信息
+bridge link show
+
+# VLAN 过滤（内核 3.8+）
+ip link set br0 type bridge vlan_filtering 1
+bridge vlan add dev eth0 vid 100
+```
+
+**Linux Bridge 的限制**：
+- L2 转发性能取决于内核协议栈，大流量下 CPU 开销明显
+- 不支持 VXLAN/Geneve 隧道封装（需要额外配置或结合其他工具）
+- 仅支持基本的 QoS（tc），没有 OVS 的精细流表控制
+
+**OVS 的差异**：
+
+OVS 是一个功能完整的虚拟交换机，支持更多高级特性：
+- **OpenFlow 协议**：通过流表规则控制数据包处理逻辑，支持集中控制面（SDN）
+- **隧道封装**：原生支持 VXLAN、Geneve、GRE、STT 等隧道协议
+- **流表匹配**：支持 L2-L4 任意字段的组合匹配
+- **QoS**：基于流的速率限制和队列
+- **DPDK 加速**：OVS-DPDK 版本可以绕过内核协议栈实现高性能转发
+
+**性能对比**：
+
+- Linux Bridge + 内核协议栈：适合中小规模场景（几百个容器），配置简便，无额外运维成本
+- OVS（内核模块版）：适合中等规模，需要 VXLAN/Geneve 隧道封装
+- OVS-DPDK：适合 NFV 和大规模云平台，用户态转发，性能可以接近硬件交换机
+
+**生产环境选型建议**：
+
+- **Docker 默认网络**：使用 Linux Bridge + iptables NAT，简单场景足够了
+- **Kubernetes Flannel**：使用 Linux Bridge + VXLAN 隧道
+- **Kubernetes Calico**：不使用 bridge，而是用路由（BGP）+ iptables 规则直接路由
+- **OpenStack**：大量使用 OVS，因为需要租户隔离、VXLAN/Geneve 隧道、安全组等高级功能
+- **Kubernetes Cilium**：不使用 bridge，使用 eBPF 直接挂载到物理网卡上
+
+**追问**:
+- Q: Linux Bridge 的 STP（生成树协议）在容器网络中有必要开启吗？不开启有什么风险？
+- Q: bridge 上配置 VLAN 过滤和将物理交换机端口设为 trunk 后接多 VLAN 路由子接口有什么区别？
+- Q: OVS 的流表匹配和 iptables 规则匹配在实现上有什么本质区别？
+
+---
+
+## Q7: DPDK 和内核协议栈有什么区别？什么场景下会考虑使用 DPDK？
+
+**难度**: ⚫⚫⚫ 高级 | **面试公司**: 华为、腾讯、阿里
+
+**答案要点**:
+- DPDK 绕过内核协议栈，在用户态直接操作网卡收发包，避免系统调用和中断开销
+- 内核协议栈有调度延迟、中断处理、锁竞争、内存拷贝等多重开销
+- DPDK 适用于高吞吐低延迟场景（NFV、5G UPF、高频交易、负载均衡器）
+- 使用 DPDK 意味着放弃内核协议栈的完整 TCP/IP 实现，需要自己维护协议栈
+
+**完整回答**:
+
+**内核协议栈的性能瓶颈**：
+
+当一个数据包从网卡到达，到应用程序接收到数据，经过了多个步骤：
+- 网卡通过 DMA 将数据写入内存
+- 硬中断通知 CPU 有新的数据包
+- 内核执行软中断（softirq）处理数据包
+- 数据包经过协议栈（IP -> TCP/UDP）
+- socket 层将数据从内核缓冲区拷贝到用户缓冲区
+- 上下文切换回用户态，应用终于拿到数据
+
+整个过程涉及频繁的中断、上下文切换、内存拷贝。在 10Gbps/25Gbps 线速下，这种设计存在严重的性能问题：
+- 每个包都触发中断（虽然 NAPI 机制有所缓解）
+- 内核和用户态之间的数据拷贝消耗大量 CPU
+- 锁竞争在多核扩展时成为瓶颈
+
+**DPDK 的思路**：
+
+DPDK（Data Plane Development Kit）提供了一个完全不同的架构：
+- **用户态驱动**：网卡驱动在用户态运行，不使用内核中断
+- **轮询模式**（Poll Mode Driver）：应用不断轮询网卡接收队列，避免中断开销
+- **大页内存**：使用 HugePages 避免 TLB Miss
+- **CPU 亲和性**：每个网卡队列绑定到特定 CPU 核心，消除锁竞争
+- **零拷贝**：网卡数据直接 DMA 到用户态内存，应用直接访问
+
+```
+传统内核协议栈:
+网卡 -> 硬中断 -> 软中断 -> 内核协议栈 -> socket 拷贝 -> 用户态
+
+DPDK 用户态协议栈:
+网卡 -> DMA -> 用户态内存 (轮询读取，零拷贝)
+```
+
+**DPDK 的适用场景**：
+
+- **NFV（网络功能虚拟化）**：vRouter、vSwitch、vFirewall 等虚拟网络功能需要线速转发
+- **5G UPF（用户面功能）**：5G 核心网的用户面需要处理几十 Gbps 流量
+- **负载均衡器**：如 F5 BIG-IP VE、DPDK 加速的 Nginx/HAProxy
+- **高频交易**：微秒级延迟的需求
+- **网络安全**：DPI（深度包检测）、IDPS 系统
+
+**使用 DPDK 的代价**：
+
+使用 DPDK 并非银弹，它带来了显著的运维复杂度：
+- 需要独占 CPU 核心（Poll Mode Driver 会跑满分配的 CPU 核）
+- 需要手动配置 HugePages（建议 1GB 大页）
+- 需要修改网卡驱动绑定到 igb_uio/vfio-pci
+- 失去了内核协议栈的完整 TCP/IP 实现——要么使用 DPDK 兼容的轻量级协议栈（如 mTCP、F-Stack、Seastar），要么对 TCP 的支持做大量的自行开发
+- 大部分云环境（如 AWS ENA、GCP gVNIC）对 DPDK 支持有限
+
+```bash
+# DPDK 网卡绑定
+# 查看当前网卡驱动
+ethtool -i eth0
+
+# 将网卡绑定到 DPDK 用户态驱动
+dpdk-devbind.py --bind=vfio-pci 0000:03:00.0
+
+# 验证绑定
+dpdk-devbind.py --status
+```
+
+**DPDK 的替代方案**：
+
+不一定要用 DPDK。以下是几个方向的考虑：
+- **XDP/eBPF**：在网卡驱动层（甚至网卡硬件）执行 BPF 程序，绕过内核协议栈但仍在内核中处理。适合包过滤、DDoS 防护等场景，比 DPDK 更安全、部署更简单。
+- **io_uring**：Linux 5.1+ 引入的异步 IO 框架，虽然主要面向文件/存储 IO，但也可用于网络。相比 epoll，减少了系统调用次数。
+- **SO_BUSY_POLL**：内核提供的 busy polling 模式，在 socket 层面实现类似 DPDK 的忙等机制，减少延迟但增加 CPU 使用。
+
+**追问**:
+- Q: DPDK 和 XDP 在实现原理上有什么区别？各有什么优缺点？
+- Q: 使用 DPDK 后 TCP 连接怎么处理？DPDK 应用如何与标准内核协议栈通信？
+- Q: 云原生环境中（Kubernetes/Cilium）如何利用 DPDK 或 eBPF 加速网络？
+
+---

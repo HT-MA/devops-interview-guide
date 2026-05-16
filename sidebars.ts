@@ -12,6 +12,10 @@ const sidebars: SidebarsConfig = {
         slug: "/linux",
       },
       items: [
+        "linux/interview-process",
+        "linux/interview-memory",
+        "linux/interview-network",
+        "linux/interview-storage",
         "linux/process-management",
         "linux/memory-management",
         "linux/cpu-analysis",
@@ -32,6 +36,9 @@ const sidebars: SidebarsConfig = {
         slug: "/docker",
       },
       items: [
+        "docker/interview-architecture",
+        "docker/interview-build",
+        "docker/interview-ops",
         "docker/container-basics",
         "docker/dockerfile-optimization",
         "docker/docker-network",
@@ -49,6 +56,9 @@ const sidebars: SidebarsConfig = {
         slug: "/kubernetes",
       },
       items: [
+        "kubernetes/interview-core",
+        "kubernetes/interview-network",
+        "kubernetes/interview-ops",
         "kubernetes/pod-lifecycle",
         "kubernetes/deployment",
         "kubernetes/service",
@@ -70,6 +80,9 @@ const sidebars: SidebarsConfig = {
         slug: "/cicd",
       },
       items: [
+        "cicd/interview-pipeline",
+        "cicd/interview-deploy",
+        "cicd/interview-tools",
         "cicd/pipeline-design",
         "cicd/jenkins",
         "cicd/github-actions",
@@ -87,6 +100,9 @@ const sidebars: SidebarsConfig = {
         slug: "/monitoring",
       },
       items: [
+        "monitoring/interview-prometheus",
+        "monitoring/interview-logging",
+        "monitoring/interview-alerting",
         "monitoring/prometheus",
         "monitoring/grafana",
         "monitoring/alerting",
@@ -103,6 +119,9 @@ const sidebars: SidebarsConfig = {
         slug: "/sre",
       },
       items: [
+        "sre/interview-reliability",
+        "sre/interview-incident",
+        "sre/interview-observability",
         "sre/slo-sli-sla",
         "sre/incident-management",
         "sre/observability",
@@ -118,6 +137,9 @@ const sidebars: SidebarsConfig = {
         slug: "/scenarios",
       },
       items: [
+        "scenarios/interview-linux",
+        "scenarios/interview-k8s",
+        "scenarios/interview-network",
         "scenarios/cpu-high",
         "scenarios/memory-leak",
         "scenarios/network-issue",
@@ -134,7 +156,13 @@ const sidebars: SidebarsConfig = {
         description: "基础设施即代码、状态管理、模块化等高频面试题",
         slug: "/terraform",
       },
-      items: ["terraform/basics", "terraform/state-management"],
+      items: [
+        "terraform/interview-core",
+        "terraform/interview-advanced",
+        "terraform/interview-troubleshoot",
+        "terraform/basics",
+        "terraform/state-management",
+      ],
     },
     {
       type: "category",
@@ -145,7 +173,13 @@ const sidebars: SidebarsConfig = {
         description: "自动化运维、 playbook 编写、角色管理等高频面试题",
         slug: "/ansible",
       },
-      items: ["ansible/basics", "ansible/playbooks"],
+      items: [
+        "ansible/interview-core",
+        "ansible/interview-advanced",
+        "ansible/interview-troubleshoot",
+        "ansible/basics",
+        "ansible/playbooks",
+      ],
     },
     {
       type: "category",
@@ -156,7 +190,12 @@ const sidebars: SidebarsConfig = {
         description: "各大厂高频面试题汇总",
         slug: "/hr",
       },
-      items: ["hr/behavioral", "hr/technical"],
+      items: [
+        "hr/interview-behavioral",
+        "hr/interview-technical-system",
+        "hr/behavioral",
+        "hr/technical",
+      ],
     },
   ],
 };
