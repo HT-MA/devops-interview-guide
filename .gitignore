@@ -23,4 +23,6 @@ dist
 .env
 .superpowers/
 .next/
+.playwright-mcp/
+out/
 
