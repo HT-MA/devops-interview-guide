@@ -125,7 +125,7 @@ const config: Config = {
       additionalLanguages: ["bash", "yaml", "json", "toml", "docker"],
     },
     colorMode: {
-      defaultMode: "light",
+      defaultMode: "dark",
       disableSwitch: false,
       respectPrefersColorScheme: true,
     },
