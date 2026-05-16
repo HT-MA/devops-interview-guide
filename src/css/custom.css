@@ -16,28 +16,28 @@
   --ifm-heading-font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --ifm-code-font-size: 90%;
 
-  --ifm-background-color: #ffffff;
-  --ifm-background-surface-color: #f8f8f8;
-  --ifm-navbar-background-color: rgba(255, 255, 255, 0.85);
+  --ifm-background-color: #0a0a0b;
+  --ifm-background-surface-color: #0e0e10;
+  --ifm-navbar-background-color: rgba(10, 10, 11, 0.85);
   --ifm-footer-background-color: #0a0a0b;
-  --ifm-code-background: rgba(0, 0, 0, 0.05);
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.06);
+  --ifm-code-background: rgba(255, 255, 255, 0.06);
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.06);
 
-  --ifm-heading-color: #0a0a0b;
-  --ifm-font-color-base: #333333;
-  --ifm-color-emphasis-300: #e0e0e0;
-  --ifm-color-emphasis-500: #999999;
-  --ifm-color-emphasis-600: #666666;
-  --ifm-color-emphasis-700: #4a4a4a;
-  --ifm-color-emphasis-800: #333333;
-  --ifm-menu-color: #666666;
-  --ifm-toc-color: #666666;
+  --ifm-heading-color: #ffffff;
+  --ifm-font-color-base: rgba(255, 255, 255, 0.78);
+  --ifm-color-emphasis-300: rgba(255, 255, 255, 0.1);
+  --ifm-color-emphasis-500: rgba(255, 255, 255, 0.35);
+  --ifm-color-emphasis-600: rgba(255, 255, 255, 0.45);
+  --ifm-color-emphasis-700: rgba(255, 255, 255, 0.55);
+  --ifm-color-emphasis-800: rgba(255, 255, 255, 0.65);
+  --ifm-menu-color: rgba(255, 255, 255, 0.5);
+  --ifm-toc-color: rgba(255, 255, 255, 0.35);
 
-  --card-border: rgba(0, 0, 0, 0.06);
-  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --card-shadow-hover: 0 8px 24px rgba(255, 107, 53, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-  --ifm-toc-border-color: rgba(0, 0, 0, 0.06);
-  --ifm-menu-color-background-active: rgba(255, 107, 53, 0.08);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 8px 24px rgba(255, 107, 53, 0.12), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --ifm-toc-border-color: rgba(255, 255, 255, 0.06);
+  --ifm-menu-color-background-active: rgba(255, 107, 53, 0.1);
 
   --ifm-global-radius: 8px;
   --ifm-code-border-radius: 6px;
