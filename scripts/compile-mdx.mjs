@@ -1,4 +1,4 @@
-import { evaluate } from "@mdx-js/mdx"
+﻿import { evaluate } from "@mdx-js/mdx"
 import * as runtime from "react/jsx-runtime"
 import * as reactDom from "react-dom/server"
 import remarkGfm from "remark-gfm"
@@ -9,7 +9,7 @@ import path from "path"
 import { fileURLToPath } from "url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const contentDir = path.join(__dirname, "..", "content")
+const contentDir = path.join(__dirname, "..", "docs")
 const outputDir = path.join(__dirname, "..", "compiled")
 
 // Theme-aware color helpers — use CSS variables so both light/dark work
@@ -186,7 +186,7 @@ async function walk(dir) {
     const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
       files.push(...(await walk(fullPath)))
-    } else if (entry.name.endsWith(".mdx")) {
+    } else if ((entry.name.endsWith(".md") || entry.name.endsWith(".mdx")) && !fullPath.includes("superpowers")) {
       files.push(fullPath)
     }
   }
@@ -222,7 +222,7 @@ async function main() {
     }
 
     const relative = path.relative(contentDir, filePath)
-    const outPath = path.join(outputDir, relative.replace(/\.mdx$/, ".json"))
+    const outPath = path.join(outputDir, relative.replace(/\.mdx$/, "").replace(/\.md$/, "") + ".json")
 
     await fs.mkdir(path.dirname(outPath), { recursive: true })
     await fs.writeFile(outPath, JSON.stringify({ html }), "utf-8")

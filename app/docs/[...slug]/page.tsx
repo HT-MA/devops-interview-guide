@@ -11,7 +11,7 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  const contentDir = path.join(process.cwd(), "content")
+  const contentDir = path.join(process.cwd(), "docs")
   const files: string[] = []
 
   async function walk(dir: string) {
@@ -21,9 +21,9 @@ export async function generateStaticParams() {
         const fullPath = path.join(dir, entry.name)
         if (entry.isDirectory()) {
           await walk(fullPath)
-        } else if (entry.name.endsWith(".mdx")) {
+        } else if ((entry.name.endsWith(".md") || entry.name.endsWith(".mdx")) && !fullPath.includes("superpowers")) {
           const relative = path.relative(contentDir, fullPath)
-          files.push(relative.replace(/\.mdx$/, ""))
+          files.push(relative.replace(/\.mdx$/, "").replace(/\.md$/, ""))
         }
       }
     } catch { /* directory may not exist */ }
