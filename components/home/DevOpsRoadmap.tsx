@@ -15,7 +15,7 @@ const stages = [
 
 export function DevOpsRoadmap() {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-[var(--border-subtle)]">
+    <section id="roadmap" className="max-w-6xl mx-auto px-6 py-20 border-t border-[var(--border-subtle)]">
       <div className="text-center mb-12 space-y-3">
         <h2 className="font-display font-extrabold text-3xl tracking-[-0.03em] text-[var(--text-primary)]">
           DevOps Roadmap

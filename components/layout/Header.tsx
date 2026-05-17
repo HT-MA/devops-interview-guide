@@ -25,7 +25,7 @@ export function Header() {
               Docs
             </Link>
             <Link
-              href="/roadmap"
+              href="/#roadmap"
               className="px-3 py-1.5 text-[0.8rem] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors rounded-md hover:bg-[var(--surface-bg)]"
             >
               Roadmap
